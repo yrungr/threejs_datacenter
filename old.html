@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>:D :D :D</title>
+		<style>
+			body { margin: 0; }
+			canvas { display: block; }
+			p { display: inline; }
+		</style>
+	</head>
+	<body>
+<div>
+	walk<input type="number" id="walk" value="5" size="2" step="0.01" />
+	strafe<input type="number" id="strafe" value="5" size="2" step="0.01" />
+	turn<input type="number" id="turn" value="2" size="1" step="0.01" />
+  <p id="fps">FPS - 0</p>
+	<canvas id="my_canvas" width="0" height="0"></canvas>
+</div>
+		<script src="https://threejs.org/build/three.min.js"></script>
+		<script src="gamepad.js"></script>
+		<script>
+
+	var gamepad = new Gamepad();
+
+	var TAU = Math.PI * 2;
+	var geometry;
+	var material;
+	var mesh;
+	var eulerRotation;
+	var xrot;
+	var yrot;
+	var zrot;
+	var red;
+	var green;
+	var blue;
+	var colorString;
+	var edges;
+	var line;
+	var xpos;
+	var ypos;
+	var zpos;
+	var servicenowBackground = "rgb(240,243,244)";
+	var lineColor = "rgb(180,180,180)";
+	var colorMin = 150;
+	var colorRange = 50;
+	var rackMax;
+	var prevTime = performance.now();
+	var moveForward = false;
+	var moveBackward = false;
+	var moveLeft = false;
+	var moveRight = false;
+	var turnLeft = false;
+	var turnRight = false;
+
+	var walkSpeed = 0.0;
+	var strafeSpeed = 0.0;
+	var turnSpeed = 0.0;
+
+	var joystickLeftHorizontal = 0;
+	var joystickLeftVertical = 0;
+	var joystickRightHorizontal = 0;
+	var joystickRightVertical = 0;
+
+
+	var velocity = new THREE.Vector3();
+	var canvasRef = document.getElementById('my_canvas');
+	var scene = new THREE.Scene();
+	var loader = new THREE.FontLoader();
+	var camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+	var rackNameList = [];
+
+	// plane with image
+	geometry = new THREE.PlaneGeometry( 1, 1, 1 );
+	var texture = new THREE.TextureLoader().load( 'room_instructions.png' );
+	material = new THREE.MeshBasicMaterial( { map: texture , transparent: true } );
+	material.side = THREE.DoubleSide;
+	mesh = new THREE.Mesh( geometry, material );
+	mesh.position.x = -2;
+	mesh.position.y = 1.4;
+	mesh.position.z = -2;
+	mesh.rotation.y = Math.PI * 1.25;
+	scene.add(mesh);
+
+
+	camera.position.x = -4.0;
+	camera.position.y = 1.8;
+	camera.position.z = -4.0;
+	camera.eulerOrder = 'ZYX';
+	camera.rotation.y = Math.PI * 1.25;
+	var count = 0;
+	for (var xloop=0; xloop < 4; xloop++){
+		for (var zloop=0; zloop < 20; zloop++){
+			for (var yloop =0; yloop < 20; yloop++){
+				geometry = new THREE.BoxGeometry(0.9,0.089,0.56);
+				material = new THREE.MeshStandardMaterial();
+				material.color.set(servicenowBackground);
+				mesh = new THREE.Mesh(geometry,material);
+				xpos = (3 * xloop) + 0.3;
+				ypos = (0.0445 * 2 * yloop) + 0.4;
+				zpos = (0.6 * zloop);
+				mesh.position.x = xpos;
+				mesh.position.y = ypos;
+				mesh.position.z = zpos;
+				mesh.castShadow = true;
+				mesh.name = "mesh_"+count;
+				rackNameList.push(mesh.name);
+				scene.add(mesh);
+				edges = new THREE.EdgesGeometry( geometry );
+				line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
+				line.position.x = xpos;
+				line.position.y = ypos;
+				line.position.z = zpos;
+				scene.add( line );
+				count = count + 1;
+			}
+		}
+	}
+	var light = new THREE.AmbientLight( 0xffffff );
+	scene.add(light);
+	var renderer = new THREE.WebGLRenderer({antialias:true, canvas:canvasRef});
+	renderer.setSize(window.innerWidth - 20, window.innerHeight - 80);
+	renderer.setClearColor(servicenowBackground);
+
+	init();
+	//////////
+	animate();
+	//////////
+
+	function init(){
+		walkSpeed = document.getElementById('walk').value;
+		strafeSpeed = document.getElementById('strafe').value;
+		turnSpeed = document.getElementById('turn').value;
+		
+		document.getElementById('walk').addEventListener('change', function(){
+			walkSpeed = document.getElementById('walk').value;
+			document.getElementById("my_canvas").focus();
+		}); 
+		
+		document.getElementById('strafe').addEventListener('change', function(){
+			strafeSpeed = document.getElementById('strafe').value;
+			document.getElementById("my_canvas").focus();
+		}); 
+		
+		document.getElementById('turn').addEventListener('change', function(){
+			turnSpeed = document.getElementById('turn').value;
+			document.getElementById("my_canvas").focus();
+		}); 
+
+		document.addEventListener( 'keydown', onKeyDown, false );
+		document.addEventListener( 'keyup', onKeyUp, false );
+		
+		gamepad.on('hold', 'stick_axis_left', e => {
+				joystickLeftHorizontal = e.value[0];
+				joystickLeftVertical = e.value[1];
+		});
+		gamepad.on('release', 'stick_axis_left', e => {
+			joystickLeftHorizontal = 0;
+			joystickLeftVertical = 0;
+		});
+		gamepad.on('hold', 'stick_axis_right', e => {
+				joystickRightHorizontal = e.value[0];
+				joystickRightVertical = e.value[1];
+		});
+		gamepad.on('release', 'stick_axis_right', e => {
+			joystickRightHorizontal = 0;
+			joystickRightVertical = 0;
+		});
+	}
+
+	function adjustWalk(){
+		walkSpeed = document.getElementById('walk').value;
+		document.getElementById("my_canvas").focus();
+	}
+
+	function adjustStrafe(){
+		strafeSpeed = document.getElementById('strafe').value;
+		document.getElementById("my_canvas").focus();
+	}
+
+	function adjustTurn(){
+		turnSpeed = document.getElementById('turn').value;
+		document.getElementById("my_canvas").focus();
+	}
+
+	function xbox360Controls(){
+		var leftHor;
+		var leftVert;
+		var rightHor;
+		var rightVert;
+		var turn;
+
+		// left stick
+		gamepad.on('hold', 'stick_axis_left', e => {
+			leftHor = e.value[0];
+			leftVert = e.value[1];
+			if (leftHor > -0.01 && leftHor < 0.01){
+				joystickLeftHorizontal = 0;
+			} else {
+				joystickLeftHorizontal = leftHor;
+			}
+			if (leftVert > -0.01 && leftVert < 0.01){
+				joystickLeftVertical = 0;
+			} else {
+				joystickLeftVertical = leftVert;
+			}
+		});
+		gamepad.on('release', 'stick_axis_left', e => {
+			joystickLeftHorizontal = 0;
+			joystickLeftVertical = 0;
+		});
+		// right stick
+		gamepad.on('hold', 'stick_axis_right', e => {
+			turn = e.value[0];
+			if (turn > -0.01 && turn < 0.01){
+				joystickRightHorizontal = 0;
+			} else {
+				joystickRightHorizontal = turn;
+			}
+		});
+		gamepad.on('release', 'stick_axis_right', e => {
+			joystickRightHorizontal = 0;
+			joystickRightVertical = 0;
+		});
+
+	}
+
+	function onKeyDown(event) {
+		switch ( event.keyCode ) {
+			case 87: // w
+				moveForward = true;
+				break;
+			case 65: // a
+				moveLeft = true; break;
+			case 83: // s
+				moveBackward = true;
+				break;
+			case 68: // d
+				moveRight = true;
+				break;
+			case 75: // k
+				turnLeft = true;
+				break;
+			case 76: // l
+				turnRight = true;
+				break;
+		}
+	}
+	
+	function onKeyUp(event) {
+		switch( event.keyCode ) {
+			case 87: // w
+				moveForward = false;
+				break;
+			case 65: // a
+				moveLeft = false;
+				break;
+			case 83: // s
+				moveBackward = false;
+				break;
+			case 68: // d
+				moveRight = false;
+				break;
+			case 75: // k
+				turnLeft = false;
+				break;
+			case 76: // l
+				turnRight = false;
+				break;
+		}
+	}
+
+	function randomColor(){
+		if (Math.random() > 0.90){
+			red = colorMin + Math.floor(Math.random() * colorRange); 
+			green = colorMin + Math.floor(Math.random() * colorRange);
+			blue = colorMin + Math.floor(Math.random() * colorRange);
+			colorString = "rgb(" + red.toString() + ", " + green.toString() + ", " + blue.toString() + ")"
+		} else {
+			colorString = servicenowBackground;
+		}
+		return colorString;
+	}
+
+	function animate() {
+		var time = performance.now();
+		var delta = ( time - prevTime ) / 1000;
+		var fps = (Math.floor(1/(( time - prevTime )/1000)));
+		document.getElementById('fps').innerHTML = fps.toString() + " fps";
+		var blah = Math.floor(Math.random() * rackNameList.length);
+		var objectName = "mesh_" + blah.toString();
+		var object = scene.getObjectByName( rackNameList[blah] );
+		object.material.color.set(randomColor())
+		requestAnimationFrame(animate);
+		if ( moveForward ){
+			camera.position.x -= walkSpeed * delta * Math.sin(camera.rotation.y);
+			camera.position.z -= walkSpeed * delta * Math.cos(camera.rotation.y);
+		}
+		if ( moveBackward ){
+			camera.position.x += walkSpeed * delta * Math.sin(camera.rotation.y);
+			camera.position.z += walkSpeed * delta * Math.cos(camera.rotation.y);
+		}
+		if ( moveLeft ){
+			camera.position.x -= walkSpeed * delta * Math.sin(camera.rotation.y + (Math.PI / 2));
+			camera.position.z -= walkSpeed * delta * Math.cos(camera.rotation.y + (Math.PI / 2));
+		}
+		if ( moveRight ){
+			camera.position.x += walkSpeed * delta * Math.sin(camera.rotation.y + (Math.PI / 2));
+			camera.position.z += walkSpeed * delta * Math.cos(camera.rotation.y + (Math.PI / 2));
+		}
+		if ( turnLeft ){
+			camera.rotation.y += turnSpeed * delta * 0.1;
+		}
+		if ( turnRight ){
+			camera.rotation.y -= turnSpeed * delta * 0.1;
+		}
+		// joystick controls
+		// forwards/backwards
+		camera.position.x += joystickLeftVertical * walkSpeed * delta * Math.sin(camera.rotation.y);
+		camera.position.z += joystickLeftVertical * walkSpeed * delta * Math.cos(camera.rotation.y);
+		// left/right
+		camera.position.x += joystickLeftHorizontal * strafeSpeed * delta * Math.sin(camera.rotation.y + (Math.PI / 2));
+		camera.position.z += joystickLeftHorizontal * strafeSpeed * delta * Math.cos(camera.rotation.y + (Math.PI / 2));
+		// turn
+		camera.rotation.y -= joystickRightHorizontal * delta * turnSpeed;
+		camera.rotation.x -= joystickRightVertical * delta * turnSpeed;
+		renderer.render(scene,camera);
+		prevTime = time;
+	}
+
+		</script>
+	</body>
+</html>
