@@ -238,13 +238,20 @@
 					var isOnObject = intersections.length > 0;
 					var time = performance.now();
 					var delta = ( time - prevTime ) / 1000;
-					velocity.x -= velocity.x * 10.0 * delta;
-					velocity.z -= velocity.z * 10.0 * delta;
+					//velocity.x -= velocity.x * 10.0 * delta;
+					//velocity.z -= velocity.z * 10.0 * delta;
 					velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-					if ( moveForward ) velocity.z -= 400.0 * delta;
-					if ( moveBackward ) velocity.z += 400.0 * delta;
-					if ( moveLeft ) velocity.x -= 400.0 * delta;
-					if ( moveRight ) velocity.x += 400.0 * delta;
+					//if ( moveForward ) velocity.z -= 400.0 * delta;
+					//if ( moveBackward ) velocity.z += 400.0 * delta;
+					//if ( moveLeft ) velocity.x -= 400.0 * delta;
+					//if ( moveRight ) velocity.x += 400.0 * delta;
+                    velocity.x = 0;
+                    //velocity.y = 0;
+                    velocity.z = 0;
+					if ( moveForward ) velocity.z = -4000.0 * delta;
+					if ( moveBackward ) velocity.z = 4000.0 * delta;
+					if ( moveLeft ) velocity.x = -4000.0 * delta;
+					if ( moveRight ) velocity.x = 4000.0 * delta;
 					if ( isOnObject === true ) {
 						velocity.y = Math.max( 0, velocity.y );
 						canJump = true;
