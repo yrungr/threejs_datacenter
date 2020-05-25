@@ -60,6 +60,10 @@
 			var controls;
 			var objects = [];
 			var raycaster;
+            var crosshair;
+            var lineColor = "rgb(0,0,0)";
+	        var servicenowBackground = "rgb(240,243,244)";
+	        var rackNameList = [];
 			var blocker = document.getElementById( 'blocker' );
 			var instructions = document.getElementById( 'instructions' );
 			var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
@@ -122,47 +126,91 @@
 			var prevTime = performance.now();
 			var velocity = new THREE.Vector3();
 			function init() {
-				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1000 );
+                var serverXSize;
+                var serverYSize;
+                var serverZSize;
+                var count;
+                var rackColor;
+                var red, green, blue;
+                // scene
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
-				var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
+                // light
+				var light = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
 				light.position.set( 0.5, 1, 0.75 );
 				scene.add( light );
-
-
+                // camera
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1000 );
 				controls = new THREE.PointerLockControls( camera );
-                // crosshair
-geometry = new THREE.Geometry();
-//geometry.vertices.push( new THREE.Vector3( 0, 0.005, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( 0, 0.02, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( 0, -0.005, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( 0, -0.02, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( 0.005, 0, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( 0.02, 0, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( -0.005, 0, 0 ) );
-//geometry.vertices.push( new THREE.Vector3( -0.02, 0, 0 ) );
-geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( 0, 0.008, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( 0, -0.008, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( 0.008, 0, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
-geometry.vertices.push( new THREE.Vector3( -0.008, 0, -0.1 ) );
-var material = new THREE.LineBasicMaterial( { color: 0x000000 } );
-var crosshair = new THREE.LineSegments( geometry, material );
-//crosshair.position.z = -2
-//crosshair.position.x = -2
-//crosshair.position.y = 1.8
-//crosshair.position.x = -4.0;
-//crosshair.position.y = 1.8;
-//crosshair.position.z = -4.0;
-//crosshair.eulerOrder = 'ZYX';
-camera.add(crosshair);
                 controls.getObject().position.set(-2.0,1.8,-2.0);
-                //controls.getObject().rotation.set(-3.0,-0.7,-3.0);
                 controls.getObject().rotation.set(-3.1415,-0.85,-3.1415);
-				scene.add( controls.getObject() );
+                scene.add(camera);
+                // crosshair
+                geometry = new THREE.Geometry();
+                geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0, 0.008, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0, -0.008, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0.008, 0, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( -0.008, 0, -0.1 ) );
+                material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+                crosshair = new THREE.LineSegments( geometry, material );
+                camera.add(crosshair);
+                // raycaster
+				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+				// floor
+				geometry = new THREE.PlaneGeometry( 2000, 2000, 1, 1 );
+				geometry.rotateX( - Math.PI / 2 );
+				for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
+					var face = geometry.faces[ i ];
+					face.vertexColors[ 0 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+					face.vertexColors[ 1 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+					face.vertexColors[ 2 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+				}
+				material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add(mesh);
+                // racks
+	            count = 0;
+	            for (var xloop=0; xloop < 4; xloop++){
+		            for (var zloop=0; zloop < 20; zloop++){
+			            for (var yloop =0; yloop < 20; yloop++){
+                            serverXSize = 0.9;
+                            serverYSize = 0.08;
+                            serverZSize = 0.56;
+				            geometry = new THREE.BoxGeometry(serverXSize,serverYSize,serverZSize);
+				            material = new THREE.MeshStandardMaterial();
+                            red = parseInt((Math.random() * 100) + 155);
+                            green = parseInt((Math.random() * 100) + 155);
+                            blue = parseInt((Math.random() * 100) + 155);
+                            rackColor = "rgb(" + red.toString() + "," + green.toString() + "," + blue.toString() + ")"
+                            console.log(rackColor)
+				            material.color.set(rackColor);
+				            mesh = new THREE.Mesh(geometry,material);
+				            xpos = (3 * xloop) + 0.3;
+				            ypos = (0.0445 * 2 * yloop) + 0.4;
+				            zpos = (0.6 * zloop);
+				            mesh.position.x = xpos;
+				            mesh.position.y = ypos;
+				            mesh.position.z = zpos;
+				            mesh.castShadow = true;
+				            mesh.name = "mesh_"+count;
+				            rackNameList.push(mesh.name);
+				            scene.add(mesh);
+				            geometry = new THREE.BoxGeometry(serverXSize + 0.0002,serverYSize + 0.0002,serverZSize + 0.0002);
+				            edges = new THREE.EdgesGeometry( geometry );
+				            line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
+				            line.position.x = xpos;
+				            line.position.y = ypos;
+				            line.position.z = zpos;
+				            scene.add( line );
+				            count = count + 1;
+			            }
+		            }
+	            }
+                // keypresses
 				var onKeyDown = function ( event ) {
 					switch ( event.keyCode ) {
 						case 38: // up
@@ -208,53 +256,9 @@ camera.add(crosshair);
 				};
 				document.addEventListener( 'keydown', onKeyDown, false );
 				document.addEventListener( 'keyup', onKeyUp, false );
-				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-				// floor
-				geometry = new THREE.PlaneGeometry( 2000, 2000, 1, 1 );
-				geometry.rotateX( - Math.PI / 2 );
-				for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
-					var face = geometry.faces[ i ];
-					face.vertexColors[ 0 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-					face.vertexColors[ 1 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-					face.vertexColors[ 2 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-				}
-				material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-				mesh = new THREE.Mesh( geometry, material );
-				scene.add( mesh );
-                scene.add(camera)
-				// objects
 
-	var count = 0;
 
-	var lineColor = "rgb(180,180,180)";
-	var rackNameList = [];
-	for (var xloop=0; xloop < 4; xloop++){
-		for (var zloop=0; zloop < 20; zloop++){
-			for (var yloop =0; yloop < 20; yloop++){
-				geometry = new THREE.BoxGeometry(0.9,0.089,0.56);
-				material = new THREE.MeshStandardMaterial();
-				material.color.set("rgb(240,243,244)");
-				mesh = new THREE.Mesh(geometry,material);
-				xpos = (3 * xloop) + 0.3;
-				ypos = (0.0445 * 2 * yloop) + 0.4;
-				zpos = (0.6 * zloop);
-				mesh.position.x = xpos;
-				mesh.position.y = ypos;
-				mesh.position.z = zpos;
-				mesh.castShadow = true;
-				mesh.name = "mesh_"+count;
-				rackNameList.push(mesh.name);
-				scene.add(mesh);
-				edges = new THREE.EdgesGeometry( geometry );
-				line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
-				line.position.x = xpos;
-				line.position.y = ypos;
-				line.position.z = zpos;
-				scene.add( line );
-				count = count + 1;
-			}
-		}
-	}
+
                 
                 
 				//
