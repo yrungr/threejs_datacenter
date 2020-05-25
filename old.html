@@ -83,6 +83,20 @@
 	mesh.rotation.y = Math.PI * 1.25;
 	scene.add(mesh);
 
+    // crosshair
+	var geometry = new THREE.Geometry();
+	geometry.vertices.push( new THREE.Vector3( 0, 0.0005, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( 0, 0.002, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( 0, -0.0005, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( 0, -0.002, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( 0.0005, 0, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( 0.002, 0, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( -0.0005, 0, 0 ) );
+	geometry.vertices.push( new THREE.Vector3( -0.002, 0, 0 ) );
+	var material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+	var crosshair = new THREE.LineSegments( geometry, material );
+	crosshair.position.z = -0.1
+	camera.add(crosshair);
 
 	camera.position.x = -4.0;
 	camera.position.y = 1.8;
@@ -119,6 +133,7 @@
 	}
 	var light = new THREE.AmbientLight( 0xffffff );
 	scene.add(light);
+    scene.add(camera);
 	var renderer = new THREE.WebGLRenderer({antialias:true, canvas:canvasRef});
 	renderer.setSize(window.innerWidth - 20, window.innerHeight - 80);
 	renderer.setClearColor(servicenowBackground);

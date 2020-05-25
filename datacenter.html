@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js - pointerlock controls</title>
+		<title>3d datacenter</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -128,7 +128,37 @@
 				var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
 				light.position.set( 0.5, 1, 0.75 );
 				scene.add( light );
+
+
 				controls = new THREE.PointerLockControls( camera );
+                // crosshair
+geometry = new THREE.Geometry();
+//geometry.vertices.push( new THREE.Vector3( 0, 0.005, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( 0, 0.02, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( 0, -0.005, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( 0, -0.02, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( 0.005, 0, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( 0.02, 0, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( -0.005, 0, 0 ) );
+//geometry.vertices.push( new THREE.Vector3( -0.02, 0, 0 ) );
+geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( 0, 0.008, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( 0, -0.008, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( 0.008, 0, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
+geometry.vertices.push( new THREE.Vector3( -0.008, 0, -0.1 ) );
+var material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+var crosshair = new THREE.LineSegments( geometry, material );
+//crosshair.position.z = -2
+//crosshair.position.x = -2
+//crosshair.position.y = 1.8
+//crosshair.position.x = -4.0;
+//crosshair.position.y = 1.8;
+//crosshair.position.z = -4.0;
+//crosshair.eulerOrder = 'ZYX';
+camera.add(crosshair);
                 controls.getObject().position.set(-2.0,1.8,-2.0);
                 //controls.getObject().rotation.set(-3.0,-0.7,-3.0);
                 controls.getObject().rotation.set(-3.1415,-0.85,-3.1415);
@@ -191,6 +221,7 @@
 				material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
 				mesh = new THREE.Mesh( geometry, material );
 				scene.add( mesh );
+                scene.add(camera)
 				// objects
 
 	var count = 0;
@@ -259,7 +290,6 @@
 					controls.getObject().translateZ( velocity.z * delta );
                     controls.getObject().position.y = 1.8;
 					prevTime = time;
-                    console.log(controls.getObject().rotation)
 				}
 				renderer.render( scene, camera );
 			}
