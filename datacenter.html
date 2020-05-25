@@ -136,8 +136,9 @@
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
                 // light
-				var light = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
-				light.position.set( 0.5, 1, 0.75 );
+				//var light = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
+				//light.position.set( 0.5, 1, 0.75 );
+                var light = new THREE.AmbientLight(0xffffff);
 				scene.add( light );
                 // camera
 				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1000 );
@@ -148,13 +149,13 @@
                 // crosshair
                 geometry = new THREE.Geometry();
                 geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0, 0.008, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0, 0.004, -0.1 ) );
                 geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0, -0.008, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0, -0.004, -0.1 ) );
                 geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0.008, 0, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( 0.004, 0, -0.1 ) );
                 geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( -0.008, 0, -0.1 ) );
+                geometry.vertices.push( new THREE.Vector3( -0.004, 0, -0.1 ) );
                 material = new THREE.LineBasicMaterial( { color: 0x000000 } );
                 crosshair = new THREE.LineSegments( geometry, material );
                 camera.add(crosshair);
