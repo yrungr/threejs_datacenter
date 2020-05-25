@@ -61,8 +61,6 @@
 			var objects = [];
 			var raycaster;
             var crosshair;
-            var lineColor = "rgb(0,0,0)";
-	        var servicenowBackground = "rgb(240,243,244)";
 	        var rackNameList = [];
 			var blocker = document.getElementById( 'blocker' );
 			var instructions = document.getElementById( 'instructions' );
@@ -125,6 +123,7 @@
 			var canJump = false;
 			var prevTime = performance.now();
 			var velocity = new THREE.Vector3();
+            var lineColor;
 			function init() {
                 var serverXSize;
                 var serverYSize;
@@ -132,6 +131,7 @@
                 var count;
                 var rackColor;
                 var red, green, blue;
+                var lineOffset;
                 // scene
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
@@ -174,6 +174,8 @@
 				scene.add(mesh);
                 // racks
 	            count = 0;
+                lineOffset = 0.0001;
+                lineColor = "rgb(155,155,155)";
 	            for (var xloop=0; xloop < 4; xloop++){
 		            for (var zloop=0; zloop < 20; zloop++){
 			            for (var yloop =0; yloop < 20; yloop++){
@@ -199,7 +201,7 @@
 				            mesh.name = "mesh_"+count;
 				            rackNameList.push(mesh.name);
 				            scene.add(mesh);
-				            geometry = new THREE.BoxGeometry(serverXSize + 0.0002,serverYSize + 0.0002,serverZSize + 0.0002);
+				            geometry = new THREE.BoxGeometry(serverXSize + lineOffset,serverYSize,serverZSize + lineOffset);
 				            edges = new THREE.EdgesGeometry( geometry );
 				            line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
 				            line.position.x = xpos;
@@ -210,7 +212,14 @@
 			            }
 		            }
 	            }
-                // keypresses
+				// renderer
+				renderer = new THREE.WebGLRenderer();
+				renderer.setClearColor( 0xffffff );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+				// event listeners
+				window.addEventListener( 'resize', onWindowResize, false );
 				var onKeyDown = function ( event ) {
 					switch ( event.keyCode ) {
 						case 38: // up
@@ -256,19 +265,6 @@
 				};
 				document.addEventListener( 'keydown', onKeyDown, false );
 				document.addEventListener( 'keyup', onKeyUp, false );
-
-
-
-                
-                
-				//
-				renderer = new THREE.WebGLRenderer();
-				renderer.setClearColor( 0xffffff );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-				//
-				window.addEventListener( 'resize', onWindowResize, false );
 			}
 			function onWindowResize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
