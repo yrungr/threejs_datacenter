@@ -288,10 +288,10 @@
                     green = 200;
                     blue = 200;
                 }
-                if (highlight == 1 && status > 0){
-                    red = red * 0.6;
-                    green = green * 0.6;
-                    blue = blue * 0.6;
+                if (highlight == 1){
+                    red = red * 0.8;
+                    green = green * 0.8;
+                    blue = blue * 0.8;
                 }
                 return [red/255,green/255,blue/255];
             }
@@ -332,25 +332,35 @@
                                 rackColor = statusColor(closest.object.status,1);
                                 closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
                                 lastSelected = closest.object.name;
-                                console.log(closest)
                             } else {
                                 if (closest.object.name != lastSelected){
-                                    // reset last selected
                                     lastObject = scene.getObjectByName(lastSelected);
-                                    console.log(lastObject)
                                     rackColor = statusColor(lastObject.status,0);
                                     lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
                                     rackColor = statusColor(closest.object.status,1);
                                     closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
                                     lastSelected = closest.object.name;
                                 }
-                                //rackColor = statusColor(lastSelected.object.status,1);
-                                //lastSelected.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                            }
+                        } else {
+                            if (lastSelected != ''){
+                                lastObject = scene.getObjectByName(lastSelected);
+                                rackColor = statusColor(lastObject.status,0);
+                                lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                                lastSelected = '';
                             }
                         }
-		            }
+		            } else {
+                        if (lastSelected != ""){
+                            lastObject = scene.getObjectByName(lastSelected);
+                            rackColor = statusColor(lastObject.status,0);
+                            lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                            lastSelected = '';
+                        }
+                    }
 					var time = performance.now();
-					var delta = ( time - prevTime ) / 1000;
+                    var delta = ( time - prevTime ) / 1000;
+                    console.log(delta)
                     velocity.x = 0;
                     velocity.z = 0;
 					if ( moveForward ) velocity.z = -200.0 * delta;
