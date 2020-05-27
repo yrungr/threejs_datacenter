@@ -57,7 +57,8 @@
 			var controls;
 			var raycaster;
             var crosshair;
-	        var rackNameList = [];
+            var rackNameList = [];
+            var lastSelected = "";
 			var blocker = document.getElementById( 'blocker' );
 			var instructions = document.getElementById( 'instructions' );
 			var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
@@ -120,15 +121,16 @@
 			var prevTime = performance.now();
 			var velocity = new THREE.Vector3();
             var lineColor;
+
 			function init() {
                 var serverXSize;
                 var serverYSize;
                 var serverZSize;
                 var count;
-                var rackColor;
+                var rackColor = [];
                 var red, green, blue;
                 var lineOffset;
-                var randomColor;
+                var status;
                 // scene
 				scene = new THREE.Scene();
 				scene.fog = new THREE.Fog( 0xffffff, 0, 50);
@@ -156,7 +158,7 @@
                 camera.add(crosshair);
                 // raycaster
 				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-				// floor
+                // floor
 				geometry = new THREE.PlaneGeometry( 2000, 2000, 1, 1 );
 				geometry.rotateX( - Math.PI / 2 );
 				for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
@@ -166,8 +168,9 @@
 					face.vertexColors[ 2 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
 				}
 				material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-				mesh = new THREE.Mesh( geometry, material );
-				scene.add(mesh);
+                mesh = new THREE.Mesh( geometry, material );
+                mesh.name = 'floor';
+                scene.add(mesh);
                 // racks
 	            count = 0;
                 lineOffset = 0.0001;
@@ -180,33 +183,9 @@
                             serverZSize = 0.56;
 				            geometry = new THREE.BoxGeometry(serverXSize,serverYSize,serverZSize);
 				            material = new THREE.MeshStandardMaterial();
-                            red = parseInt((Math.random() * 100) + 155);
-                            green = parseInt((Math.random() * 100) + 155);
-                            blue = parseInt((Math.random() * 100) + 155);
-                            red = 255;
-                            green = 255;
-                            blue = 255;
-                            randomColor = Math.random();
-                            // no data
-                            rackColor = 'rgb(200,200,200)'
-                            if (randomColor >= 0 && randomColor < 0.35){
-                                // is compliant
-		                        rackColor = 'rgb(200,255,200)';
-                            }
-                            if (randomColor >= 0.35 && randomColor < 0.45){
-                                // not enough info
-		                        rackColor = 'rgb(200,200,255)';
-                            }
-                            if (randomColor >= 0.45 && randomColor < 0.55){
-                                // is not compliant
-		                        rackColor = 'rgb(255,255,160)';
-                            }
-                            if (randomColor >= 0.55 && randomColor < 0.65){
-                                // end of support
-		                        rackColor = 'rgb(255,200,200)';
-                            }
-                            //rackColor = "rgb(" + red.toString() + "," + green.toString() + "," + blue.toString() + ")"
-				            material.color.set(rackColor);
+                            status = Math.floor(Math.random() * 5);
+                            rackColor = statusColor(status,0);
+				            material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
 				            mesh = new THREE.Mesh(geometry,material);
 				            xpos = (3 * xloop) + 0.3;
 				            ypos = (0.0445 * 2 * yloop) + 0.4;
@@ -214,7 +193,8 @@
 				            mesh.position.x = xpos;
 				            mesh.position.y = ypos;
 				            mesh.position.z = zpos;
-				            mesh.castShadow = true;
+                            mesh.castShadow = true;
+                            mesh.status = status;
 				            mesh.name = "mesh_"+count;
 				            rackNameList.push(mesh.name);
 				            scene.add(mesh);
@@ -278,7 +258,43 @@
 				};
 				document.addEventListener( 'keydown', onKeyDown, false );
 				document.addEventListener( 'keyup', onKeyUp, false );
-			}
+            }
+            function statusColor(status,highlight){
+                var red;
+                var green;
+                var blue;
+                if (status == 0 ){
+                    red = 200;
+                    green = 200;
+                    blue = 200;
+                }
+                if (status == 1 ){
+                    red = 200;
+                    green = 255;
+                    blue = 200;
+                }
+                if (status == 2 ){
+                    red = 200;
+                    green = 200;
+                    blue = 255;
+                }
+                if (status == 3 ){
+                    red = 255;
+                    green = 255;
+                    blue = 160;
+                }
+                if (status == 4 ){
+                    red = 255;
+                    green = 200;
+                    blue = 200;
+                }
+                if (highlight == 1 && status > 0){
+                    red = red * 0.6;
+                    green = green * 0.6;
+                    blue = blue * 0.6;
+                }
+                return [red/255,green/255,blue/255];
+            }
 			function onWindowResize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
@@ -288,10 +304,11 @@
 		        var intersects;
 		        var closest;
 		        var sysid;
-		        var closestDistance = -1;
+                var closestDistance = -1;
+                var rackColor = [];
+                var lastObject;
 				requestAnimationFrame( animate );
 				if ( controlsEnabled ) {
-                    //raycaster.ray.origin.copy( controls.getObject().position);
 		            raycaster.set( camera.getWorldPosition(), camera.getWorldDirection() );
                     var intersects = raycaster.intersectObjects(scene.children);
 		            if (intersects.length > 0){
@@ -310,8 +327,27 @@
 			            }
 		            }
 		            if (closestDistance != -1){
-                        closest.object.material.color.setHex( 0xffffff );
-                        //console.log(closest.object.material);
+                        if (closest.object.name != 'floor'){
+                            if (lastSelected == ''){
+                                rackColor = statusColor(closest.object.status,1);
+                                closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                                lastSelected = closest.object.name;
+                                console.log(closest)
+                            } else {
+                                if (closest.object.name != lastSelected){
+                                    // reset last selected
+                                    lastObject = scene.getObjectByName(lastSelected);
+                                    console.log(lastObject)
+                                    rackColor = statusColor(lastObject.status,0);
+                                    lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                                    rackColor = statusColor(closest.object.status,1);
+                                    closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                                    lastSelected = closest.object.name;
+                                }
+                                //rackColor = statusColor(lastSelected.object.status,1);
+                                //lastSelected.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+                            }
+                        }
 		            }
 					var time = performance.now();
 					var delta = ( time - prevTime ) / 1000;
