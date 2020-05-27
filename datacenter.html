@@ -48,9 +48,6 @@
         <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
 		<div id="blocker">
 			<div id="instructions">
-				<span style="font-size:40px">Click to play</span>
-				<br />
-				(W, A, S, D = Move, MOUSE = Look around)
 			</div>
 		</div>
 
@@ -58,7 +55,6 @@
 			var camera, scene, renderer;
 			var geometry, material, mesh;
 			var controls;
-			var objects = [];
 			var raycaster;
             var crosshair;
 	        var rackNameList = [];
@@ -132,12 +128,11 @@
                 var rackColor;
                 var red, green, blue;
                 var lineOffset;
+                var randomColor;
                 // scene
 				scene = new THREE.Scene();
-				scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
+				scene.fog = new THREE.Fog( 0xffffff, 0, 50);
                 // light
-				//var light = new THREE.HemisphereLight( 0xffffff, 0xffffff, 1 );
-				//light.position.set( 0.5, 1, 0.75 );
                 var light = new THREE.AmbientLight(0xffffff);
 				scene.add( light );
                 // camera
@@ -188,8 +183,29 @@
                             red = parseInt((Math.random() * 100) + 155);
                             green = parseInt((Math.random() * 100) + 155);
                             blue = parseInt((Math.random() * 100) + 155);
-                            rackColor = "rgb(" + red.toString() + "," + green.toString() + "," + blue.toString() + ")"
-                            console.log(rackColor)
+                            red = 255;
+                            green = 255;
+                            blue = 255;
+                            randomColor = Math.random();
+                            // no data
+                            rackColor = 'rgb(200,200,200)'
+                            if (randomColor >= 0 && randomColor < 0.35){
+                                // is compliant
+		                        rackColor = 'rgb(200,255,200)';
+                            }
+                            if (randomColor >= 0.35 && randomColor < 0.45){
+                                // not enough info
+		                        rackColor = 'rgb(200,200,255)';
+                            }
+                            if (randomColor >= 0.45 && randomColor < 0.55){
+                                // is not compliant
+		                        rackColor = 'rgb(255,255,160)';
+                            }
+                            if (randomColor >= 0.55 && randomColor < 0.65){
+                                // end of support
+		                        rackColor = 'rgb(255,200,200)';
+                            }
+                            //rackColor = "rgb(" + red.toString() + "," + green.toString() + "," + blue.toString() + ")"
 				            material.color.set(rackColor);
 				            mesh = new THREE.Mesh(geometry,material);
 				            xpos = (3 * xloop) + 0.3;
@@ -214,7 +230,7 @@
 		            }
 	            }
 				// renderer
-				renderer = new THREE.WebGLRenderer();
+				renderer = new THREE.WebGLRenderer({ antialias: true });
 				renderer.setClearColor( 0xffffff );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -237,10 +253,6 @@
 						case 39: // right
 						case 68: // d
 							moveRight = true;
-							break;
-						case 32: // space
-							if ( canJump === true ) velocity.y += 350;
-							canJump = false;
 							break;
 					}
 				};
@@ -272,13 +284,35 @@
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
-			function animate() {
+			function animate() {		var closestDistance = -1;
+		        var intersects;
+		        var closest;
+		        var sysid;
+		        var closestDistance = -1;
 				requestAnimationFrame( animate );
 				if ( controlsEnabled ) {
-					raycaster.ray.origin.copy( controls.getObject().position );
-					raycaster.ray.origin.y -= 10;
-					var intersections = raycaster.intersectObjects( objects );
-					var isOnObject = intersections.length > 0;
+                    //raycaster.ray.origin.copy( controls.getObject().position);
+		            raycaster.set( camera.getWorldPosition(), camera.getWorldDirection() );
+                    var intersects = raycaster.intersectObjects(scene.children);
+		            if (intersects.length > 0){
+			            for ( var i = 0; i < intersects.length; i++ ) {
+				            if (intersects[i].object.type == 'Mesh'){
+					            if (closestDistance == -1){
+						            closestDistance = intersects[i].distance;
+						            closest = intersects[i];
+					            } else {
+						            if (intersects[i].distance < closestDistance){
+							            closestDistance = intersects[i].distance;
+							            closest = intersects[i];
+						            }
+					            }
+				            }
+			            }
+		            }
+		            if (closestDistance != -1){
+                        closest.object.material.color.setHex( 0xffffff );
+                        //console.log(closest.object.material);
+		            }
 					var time = performance.now();
 					var delta = ( time - prevTime ) / 1000;
                     velocity.x = 0;
