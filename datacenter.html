@@ -20,7 +20,7 @@
   <body>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
-    <canvas id="my_canvas" width="600" height="400"></canvas>
+    <canvas id="my_canvas" width="1000" height="800"></canvas>
     <script>
 var camera, scene, renderer;
 var geometry, material, mesh;
@@ -43,10 +43,8 @@ if ( havePointerLock ) {
   var pointerlockchange = function ( event ) {
     if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
       controlsEnabled = true;
-      //controls.enabled = true;
     } else {
       controlsEnabled = false;
-      //controls.enabled = false;
     }
   };
   document.addEventListener( 'pointerlockchange', pointerlockchange, false );
@@ -59,10 +57,8 @@ if ( havePointerLock ) {
 } else {
   console.log('Your browser doesn\'t seem to support Pointer Lock API');
 }
-/////////////////////////////////////
 init();
 animate();
-/////////////////////////
 function init() {
   var serverXSize;
   var serverYSize;
@@ -74,7 +70,7 @@ function init() {
   var status;
   // scene
   scene = new THREE.Scene();
-  scene.fog = new THREE.Fog( 0xffffff, 0, 50);
+  scene.fog = new THREE.Fog( 0xf0f3f4, 0, 50);
   // light
   var light = new THREE.AmbientLight(0xffffff);
   scene.add( light );
@@ -151,15 +147,10 @@ function init() {
     }
   }
   // renderer
-
-	renderer = new THREE.WebGLRenderer({antialias:true, canvas:document.getElementById('my_canvas')});
-  //renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setClearColor( 0xffffff );
-  renderer.setPixelRatio( window.devicePixelRatio );
-  //renderer.setSize( window.innerWidth, window.innerHeight );
-  //document.body.appendChild( renderer.domElement );
-  // event listeners
-  window.addEventListener( 'resize', onWindowResize, false );
+  renderer = new THREE.WebGLRenderer({antialias:true, canvas:document.getElementById('my_canvas')});
+  renderer.setClearColor( 0xf0f3f4 );
+  rendererResize();
+  window.addEventListener( 'resize', rendererResize, false );
   var onKeyDown = function ( event ) {
     switch ( event.keyCode ) {
       case 38: // up
@@ -241,10 +232,11 @@ function statusColor(status,highlight){
   return [red/255,green/255,blue/255];
 }
 //////////
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+function rendererResize() {
+  var canvasElement = document.getElementById('my_canvas');
+  camera.aspect = canvasElement.width / canvasElement.height;
   camera.updateProjectionMatrix();
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize( canvasElement.width, canvasElement.height );
 }
 ////////
 function animate() {    var closestDistance = -1;
