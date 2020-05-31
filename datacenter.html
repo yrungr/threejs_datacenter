@@ -1,377 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>3d datacenter</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			html, body {
-				width: 100%;
-				height: 100%;
-			}
-			body {
-				background-color: #ffffff;
-				margin: 0;
-				overflow: hidden;
-				font-family: arial;
-			}
-			#blocker {
-				position: absolute;
-				width: 100%;
-				height: 100%;
-				background-color: rgba(0,0,0,0.5);
-			}
-			#instructions {
-				width: 100%;
-				height: 100%;
-				display: -webkit-box;
-				display: -moz-box;
-				display: box;
-				-webkit-box-orient: horizontal;
-				-moz-box-orient: horizontal;
-				box-orient: horizontal;
-				-webkit-box-pack: center;
-				-moz-box-pack: center;
-				box-pack: center;
-				-webkit-box-align: center;
-				-moz-box-align: center;
-				box-align: center;
-				color: #ffffff;
-				text-align: center;
-				cursor: pointer;
-			}
-		</style>
-	</head>
-	<body>
-		<script src="https://threejs.org/build/three.min.js"></script>
+  <head>
+    <title>3d datacenter</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        background-color: #ffffff;
+        margin: 0;
+        overflow: hidden;
+        font-family: arial;
+      }
+      #blocker {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+      }
+      #instructions {
+        width: 100%;
+        height: 100%;
+        display: -webkit-box;
+        display: -moz-box;
+        display: box;
+        -webkit-box-orient: horizontal;
+        -moz-box-orient: horizontal;
+        box-orient: horizontal;
+        -webkit-box-pack: center;
+        -moz-box-pack: center;
+        box-pack: center;
+        -webkit-box-align: center;
+        -moz-box-align: center;
+        box-align: center;
+        color: #ffffff;
+        text-align: center;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://threejs.org/build/three.min.js"></script>
         <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
-		<div id="blocker">
-			<div id="instructions">
-			</div>
-		</div>
+    <div id="blocker">
+      <div id="instructions">
+      </div>
+    </div>
 
-		<script>
-			var camera, scene, renderer;
-			var geometry, material, mesh;
-			var controls;
-			var raycaster;
-            var crosshair;
-            var rackNameList = [];
-            var lastSelected = "";
-			var blocker = document.getElementById( 'blocker' );
-			var instructions = document.getElementById( 'instructions' );
-			var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
-			if ( havePointerLock ) {
-				var element = document.body;
-				var pointerlockchange = function ( event ) {
-					if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-						controlsEnabled = true;
-						controls.enabled = true;
-						blocker.style.display = 'none';
-					} else {
-						controls.enabled = false;
-						blocker.style.display = '-webkit-box';
-						blocker.style.display = '-moz-box';
-						blocker.style.display = 'box';
-						instructions.style.display = '';
-					}
-				};
-				var pointerlockerror = function ( event ) {
-					instructions.style.display = '';
-				};
-				// Hook pointer lock state change events
-				document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-				document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
-				document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
-				document.addEventListener( 'pointerlockerror', pointerlockerror, false );
-				document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
-				document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
-				instructions.addEventListener( 'click', function ( event ) {
-					instructions.style.display = 'none';
-					// Ask the browser to lock the pointer
-					element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-					if ( /Firefox/i.test( navigator.userAgent ) ) {
-						var fullscreenchange = function ( event ) {
-							if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
-								document.removeEventListener( 'fullscreenchange', fullscreenchange );
-								document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
-								element.requestPointerLock();
-							}
-						};
-						document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-						document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
-						element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
-						element.requestFullscreen();
-					} else {
-						element.requestPointerLock();
-					}
-				}, false );
-			} else {
-				instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
-			}
-			init();
-			animate();
-			var controlsEnabled = false;
-			var moveForward = false;
-			var moveBackward = false;
-			var moveLeft = false;
-			var moveRight = false;
-			var canJump = false;
-			var prevTime = performance.now();
-			var velocity = new THREE.Vector3();
-            var lineColor;
+    <script>
+var camera, scene, renderer;
+var geometry, material, mesh;
+var controls;
+var raycaster;
+var crosshair;
+var rackNameList = [];
+var lastSelected = "";
+//var blocker = document.getElementById( 'blocker' );
+//var instructions = document.getElementById( 'instructions' );
+// check in the browser has pointerlock
+var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+if ( havePointerLock ) {
+  var element = document.body;
 
-			function init() {
-                var serverXSize;
-                var serverYSize;
-                var serverZSize;
-                var count;
-                var rackColor = [];
-                var red, green, blue;
-                var lineOffset;
-                var status;
-                // scene
-				scene = new THREE.Scene();
-				scene.fog = new THREE.Fog( 0xffffff, 0, 50);
-                // light
-                var light = new THREE.AmbientLight(0xffffff);
-				scene.add( light );
-                // camera
-				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1000 );
-				controls = new THREE.PointerLockControls( camera );
-                controls.getObject().position.set(-2.0,1.8,-2.0);
-                controls.getObject().rotation.set(-3.1415,-0.85,-3.1415);
-                scene.add(camera);
-                // crosshair
-                geometry = new THREE.Geometry();
-                geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0, 0.004, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0, -0.004, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( 0.004, 0, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
-                geometry.vertices.push( new THREE.Vector3( -0.004, 0, -0.1 ) );
-                material = new THREE.LineBasicMaterial( { color: 0x000000 } );
-                crosshair = new THREE.LineSegments( geometry, material );
-                camera.add(crosshair);
-                // raycaster
-				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
-                // floor
-				geometry = new THREE.PlaneGeometry( 2000, 2000, 1, 1 );
-				geometry.rotateX( - Math.PI / 2 );
-				for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
-					var face = geometry.faces[ i ];
-					face.vertexColors[ 0 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-					face.vertexColors[ 1 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-					face.vertexColors[ 2 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
-				}
-				material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
-                mesh = new THREE.Mesh( geometry, material );
-                mesh.name = 'floor';
-                scene.add(mesh);
-                // racks
-	            count = 0;
-                lineOffset = 0.0001;
-                lineColor = "rgb(155,155,155)";
-	            for (var xloop=0; xloop < 4; xloop++){
-		            for (var zloop=0; zloop < 20; zloop++){
-			            for (var yloop =0; yloop < 20; yloop++){
-                            serverXSize = 0.9;
-                            serverYSize = 0.08;
-                            serverZSize = 0.56;
-				            geometry = new THREE.BoxGeometry(serverXSize,serverYSize,serverZSize);
-				            material = new THREE.MeshStandardMaterial();
-                            status = Math.floor(Math.random() * 5);
-                            rackColor = statusColor(status,0);
-				            material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-				            mesh = new THREE.Mesh(geometry,material);
-				            xpos = (3 * xloop) + 0.3;
-				            ypos = (0.0445 * 2 * yloop) + 0.4;
-				            zpos = (0.6 * zloop);
-				            mesh.position.x = xpos;
-				            mesh.position.y = ypos;
-				            mesh.position.z = zpos;
-                            mesh.castShadow = true;
-                            mesh.status = status;
-				            mesh.name = "mesh_"+count;
-				            rackNameList.push(mesh.name);
-				            scene.add(mesh);
-				            geometry = new THREE.BoxGeometry(serverXSize + lineOffset,serverYSize,serverZSize + lineOffset);
-				            edges = new THREE.EdgesGeometry( geometry );
-				            line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
-				            line.position.x = xpos;
-				            line.position.y = ypos;
-				            line.position.z = zpos;
-				            scene.add( line );
-				            count = count + 1;
-			            }
-		            }
-	            }
-				// renderer
-				renderer = new THREE.WebGLRenderer({ antialias: true });
-				renderer.setClearColor( 0xffffff );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
-				// event listeners
-				window.addEventListener( 'resize', onWindowResize, false );
-				var onKeyDown = function ( event ) {
-					switch ( event.keyCode ) {
-						case 38: // up
-						case 87: // w
-							moveForward = true;
-							break;
-						case 37: // left
-						case 65: // a
-							moveLeft = true; break;
-						case 40: // down
-						case 83: // s
-							moveBackward = true;
-							break;
-						case 39: // right
-						case 68: // d
-							moveRight = true;
-							break;
-					}
-				};
-				var onKeyUp = function ( event ) {
-					switch( event.keyCode ) {
-						case 38: // up
-						case 87: // w
-							moveForward = false;
-							break;
-						case 37: // left
-						case 65: // a
-							moveLeft = false;
-							break;
-						case 40: // down
-						case 83: // s
-							moveBackward = false;
-							break;
-						case 39: // right
-						case 68: // d
-							moveRight = false;
-							break;
-					}
-				};
-				document.addEventListener( 'keydown', onKeyDown, false );
-				document.addEventListener( 'keyup', onKeyUp, false );
+
+
+
+
+  var pointerlockchange = function ( event ) {
+    if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+      controlsEnabled = true;
+      controls.enabled = true;
+      blocker.style.display = 'none';
+    } else {
+      controls.enabled = false;
+      blocker.style.display = '-webkit-box';
+      blocker.style.display = '-moz-box';
+      blocker.style.display = 'box';
+      instructions.style.display = '';
+    }
+  };
+
+
+
+
+
+  //var pointerlockerror = function ( event ) {
+  //instructions.style.display = '';
+  //};
+
+
+
+  
+  // Hook pointer lock state change events
+  document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+  document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
+  document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
+  //document.addEventListener( 'pointerlockerror', pointerlockerror, false );
+  //document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
+  //document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
+  // click to start
+  instructions.addEventListener( 'click', function ( event ) {
+    instructions.style.display = 'none';
+    // Ask the browser to lock the pointer
+    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+    if ( /Firefox/i.test( navigator.userAgent ) ) {
+      var fullscreenchange = function ( event ) {
+        if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+          document.removeEventListener( 'fullscreenchange', fullscreenchange );
+          document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+          element.requestPointerLock();
+        }
+      };
+      document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+      document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+      element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+      element.requestFullscreen();
+    } else {
+      element.requestPointerLock();
+    }
+  }, false );
+} else {
+  instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+}
+/////////////////////////////////////
+init();
+animate();
+var controlsEnabled = false;
+var moveForward = false;
+var moveBackward = false;
+var moveLeft = false;
+var moveRight = false;
+var canJump = false;
+var prevTime = performance.now();
+var velocity = new THREE.Vector3();
+var lineColor;
+/////////////////////////
+function init() {
+  var serverXSize;
+  var serverYSize;
+  var serverZSize;
+  var count;
+  var rackColor = [];
+  var red, green, blue;
+  var lineOffset;
+  var status;
+  // scene
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog( 0xffffff, 0, 50);
+  // light
+  var light = new THREE.AmbientLight(0xffffff);
+  scene.add( light );
+  // camera
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1000 );
+  controls = new THREE.PointerLockControls( camera );
+  controls.getObject().position.set(-2.0,1.8,-2.0);
+  controls.getObject().rotation.set(-3.1415,-0.85,-3.1415);
+  scene.add(camera);
+  // crosshair
+  geometry = new THREE.Geometry();
+  geometry.vertices.push( new THREE.Vector3( 0, 0.001, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( 0, 0.004, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( 0, -0.001, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( 0, -0.004, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( 0.001, 0, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( 0.004, 0, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( -0.001, 0, -0.1 ) );
+  geometry.vertices.push( new THREE.Vector3( -0.004, 0, -0.1 ) );
+  material = new THREE.LineBasicMaterial( { color: 0x000000 } );
+  crosshair = new THREE.LineSegments( geometry, material );
+  camera.add(crosshair);
+  // raycaster
+  raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+  // floor
+  geometry = new THREE.PlaneGeometry( 2000, 2000, 1, 1 );
+  geometry.rotateX( - Math.PI / 2 );
+  for ( var i = 0, l = geometry.faces.length; i < l; i ++ ) {
+    var face = geometry.faces[ i ];
+    face.vertexColors[ 0 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+    face.vertexColors[ 1 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+    face.vertexColors[ 2 ] = new THREE.Color().setHSL( 0.75, 0.0, 0.75 );
+  }
+  material = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+  mesh = new THREE.Mesh( geometry, material );
+  mesh.name = 'floor';
+  scene.add(mesh);
+  // racks
+  count = 0;
+  lineOffset = 0.0001;
+  lineColor = "rgb(155,155,155)";
+  for (var xloop=0; xloop < 4; xloop++){
+    for (var zloop=0; zloop < 20; zloop++){
+      for (var yloop =0; yloop < 20; yloop++){
+        serverXSize = 0.9;
+        serverYSize = 0.08;
+        serverZSize = 0.56;
+        geometry = new THREE.BoxGeometry(serverXSize,serverYSize,serverZSize);
+        material = new THREE.MeshStandardMaterial();
+        status = Math.floor(Math.random() * 5);
+        rackColor = statusColor(status,0);
+        material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+        mesh = new THREE.Mesh(geometry,material);
+        xpos = (3 * xloop) + 0.3;
+        ypos = (0.0445 * 2 * yloop) + 0.4;
+        zpos = (0.6 * zloop);
+        mesh.position.x = xpos;
+        mesh.position.y = ypos;
+        mesh.position.z = zpos;
+        mesh.castShadow = true;
+        mesh.status = status;
+        mesh.name = "mesh_"+count;
+        rackNameList.push(mesh.name);
+        scene.add(mesh);
+        geometry = new THREE.BoxGeometry(serverXSize + lineOffset,serverYSize,serverZSize + lineOffset);
+        edges = new THREE.EdgesGeometry( geometry );
+        line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: lineColor } ) );
+        line.position.x = xpos;
+        line.position.y = ypos;
+        line.position.z = zpos;
+        scene.add( line );
+        count = count + 1;
+      }
+    }
+  }
+  // renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setClearColor( 0xffffff );
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  document.body.appendChild( renderer.domElement );
+  // event listeners
+  window.addEventListener( 'resize', onWindowResize, false );
+  var onKeyDown = function ( event ) {
+    switch ( event.keyCode ) {
+      case 38: // up
+      case 87: // w
+        moveForward = true;
+        break;
+      case 37: // left
+      case 65: // a
+        moveLeft = true;
+        break;
+      case 40: // down
+      case 83: // s
+        moveBackward = true;
+        break;
+      case 39: // right
+      case 68: // d
+        moveRight = true;
+        break;
+    }
+  };
+  var onKeyUp = function ( event ) {
+    switch( event.keyCode ) {
+      case 38: // up
+      case 87: // w
+        moveForward = false;
+        break;
+      case 37: // left
+      case 65: // a
+        moveLeft = false;
+        break;
+      case 40: // down
+      case 83: // s
+        moveBackward = false;
+        break;
+      case 39: // right
+      case 68: // d
+        moveRight = false;
+        break;
+    }
+  };
+  document.addEventListener( 'keydown', onKeyDown, false );
+  document.addEventListener( 'keyup', onKeyUp, false );
+}
+////////
+function statusColor(status,highlight){
+  var red;
+  var green;
+  var blue;
+  if (status == 0 ){
+    red = 200;
+    green = 200;
+    blue = 200;
+  }
+  if (status == 1 ){
+    red = 200;
+    green = 255;
+    blue = 200;
+  }
+  if (status == 2 ){
+    red = 200;
+    green = 200;
+    blue = 255;
+  }
+  if (status == 3 ){
+    red = 255;
+    green = 255;
+    blue = 160;
+  }
+  if (status == 4 ){
+    red = 255;
+    green = 200;
+    blue = 200;
+  }
+  if (highlight == 1){
+    red = red * 0.8;
+    green = green * 0.8;
+    blue = blue * 0.8;
+  }
+  return [red/255,green/255,blue/255];
+}
+//////////
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
+////////
+function animate() {    var closestDistance = -1;
+  var intersects;
+  var closest;
+  var sysid;
+  var closestDistance = -1;
+  var rackColor = [];
+  var lastObject;
+  requestAnimationFrame( animate );
+  if ( controlsEnabled ) {
+    raycaster.set( camera.getWorldPosition(), camera.getWorldDirection() );
+    var intersects = raycaster.intersectObjects(scene.children);
+    if (intersects.length > 0){
+      for ( var i = 0; i < intersects.length; i++ ) {
+        if (intersects[i].object.type == 'Mesh'){
+          if (closestDistance == -1){
+            closestDistance = intersects[i].distance;
+            closest = intersects[i];
+          } else {
+            if (intersects[i].distance < closestDistance){
+              closestDistance = intersects[i].distance;
+              closest = intersects[i];
             }
-            function statusColor(status,highlight){
-                var red;
-                var green;
-                var blue;
-                if (status == 0 ){
-                    red = 200;
-                    green = 200;
-                    blue = 200;
-                }
-                if (status == 1 ){
-                    red = 200;
-                    green = 255;
-                    blue = 200;
-                }
-                if (status == 2 ){
-                    red = 200;
-                    green = 200;
-                    blue = 255;
-                }
-                if (status == 3 ){
-                    red = 255;
-                    green = 255;
-                    blue = 160;
-                }
-                if (status == 4 ){
-                    red = 255;
-                    green = 200;
-                    blue = 200;
-                }
-                if (highlight == 1){
-                    red = red * 0.8;
-                    green = green * 0.8;
-                    blue = blue * 0.8;
-                }
-                return [red/255,green/255,blue/255];
-            }
-			function onWindowResize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-			function animate() {		var closestDistance = -1;
-		        var intersects;
-		        var closest;
-		        var sysid;
-                var closestDistance = -1;
-                var rackColor = [];
-                var lastObject;
-				requestAnimationFrame( animate );
-				if ( controlsEnabled ) {
-		            raycaster.set( camera.getWorldPosition(), camera.getWorldDirection() );
-                    var intersects = raycaster.intersectObjects(scene.children);
-		            if (intersects.length > 0){
-			            for ( var i = 0; i < intersects.length; i++ ) {
-				            if (intersects[i].object.type == 'Mesh'){
-					            if (closestDistance == -1){
-						            closestDistance = intersects[i].distance;
-						            closest = intersects[i];
-					            } else {
-						            if (intersects[i].distance < closestDistance){
-							            closestDistance = intersects[i].distance;
-							            closest = intersects[i];
-						            }
-					            }
-				            }
-			            }
-		            }
-		            if (closestDistance != -1){
-                        if (closest.object.name != 'floor'){
-                            if (lastSelected == ''){
-                                rackColor = statusColor(closest.object.status,1);
-                                closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-                                lastSelected = closest.object.name;
-                            } else {
-                                if (closest.object.name != lastSelected){
-                                    lastObject = scene.getObjectByName(lastSelected);
-                                    rackColor = statusColor(lastObject.status,0);
-                                    lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-                                    rackColor = statusColor(closest.object.status,1);
-                                    closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-                                    lastSelected = closest.object.name;
-                                }
-                            }
-                        } else {
-                            if (lastSelected != ''){
-                                lastObject = scene.getObjectByName(lastSelected);
-                                rackColor = statusColor(lastObject.status,0);
-                                lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-                                lastSelected = '';
-                            }
-                        }
-		            } else {
-                        if (lastSelected != ""){
-                            lastObject = scene.getObjectByName(lastSelected);
-                            rackColor = statusColor(lastObject.status,0);
-                            lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
-                            lastSelected = '';
-                        }
-                    }
-					var time = performance.now();
-                    var delta = ( time - prevTime ) / 1000;
-                    velocity.x = 0;
-                    velocity.z = 0;
-					if ( moveForward ) velocity.z = -200.0 * delta;
-					if ( moveBackward ) velocity.z = 200.0 * delta;
-					if ( moveLeft ) velocity.x = -200.0 * delta;
-					if ( moveRight ) velocity.x = 200.0 * delta;
-					controls.getObject().translateX( velocity.x * delta );
-					controls.getObject().translateZ( velocity.z * delta );
-                    controls.getObject().position.y = 1.8;
-					prevTime = time;
-				}
-				renderer.render( scene, camera );
-			}
-		</script>
-	</body>
+          }
+        }
+      }
+    }
+    if (closestDistance != -1){
+      if (closest.object.name != 'floor'){
+        if (lastSelected == ''){
+          rackColor = statusColor(closest.object.status,1);
+          closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+          lastSelected = closest.object.name;
+        } else {
+          if (closest.object.name != lastSelected){
+            lastObject = scene.getObjectByName(lastSelected);
+            rackColor = statusColor(lastObject.status,0);
+            lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+            rackColor = statusColor(closest.object.status,1);
+            closest.object.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+            lastSelected = closest.object.name;
+          }
+        }
+      } else {
+        if (lastSelected != ''){
+          lastObject = scene.getObjectByName(lastSelected);
+          rackColor = statusColor(lastObject.status,0);
+          lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+          lastSelected = '';
+        }
+      }
+    } else {
+      if (lastSelected != ""){
+        lastObject = scene.getObjectByName(lastSelected);
+        rackColor = statusColor(lastObject.status,0);
+        lastObject.material.color.setRGB(rackColor[0],rackColor[1],rackColor[2]);
+        lastSelected = '';
+      }
+    }
+    var time = performance.now();
+    var delta = ( time - prevTime ) / 1000;
+    velocity.x = 0;
+    velocity.z = 0;
+    if ( moveForward ) velocity.z = -200.0 * delta;
+    if ( moveBackward ) velocity.z = 200.0 * delta;
+    if ( moveLeft ) velocity.x = -200.0 * delta;
+    if ( moveRight ) velocity.x = 200.0 * delta;
+    controls.getObject().translateX( velocity.x * delta );
+    controls.getObject().translateZ( velocity.z * delta );
+    controls.getObject().position.y = 1.8;
+    prevTime = time;
+  }
+  renderer.render( scene, camera );
+}
+/////////////////
+    </script>
+  </body>
 </html>
