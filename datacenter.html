@@ -44,11 +44,8 @@
   </head>
   <body>
     <script src="https://threejs.org/build/three.min.js"></script>
-        <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
-    <div id="blocker">
-      <div id="instructions">
-      </div>
-    </div>
+    <script src="https://threejs.org/examples/js/controls/PointerLockControls.js"></script>
+    <canvas id="my_canvas" width="1200" height="800"></canvas>
 
     <script>
 var camera, scene, renderer;
@@ -64,6 +61,7 @@ var lastSelected = "";
 var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
 if ( havePointerLock ) {
   var element = document.body;
+  //var element = document.getElementById('my_canvas');
 
 
 
@@ -73,13 +71,13 @@ if ( havePointerLock ) {
     if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
       controlsEnabled = true;
       controls.enabled = true;
-      blocker.style.display = 'none';
+      //blocker.style.display = 'none';
     } else {
       controls.enabled = false;
-      blocker.style.display = '-webkit-box';
-      blocker.style.display = '-moz-box';
-      blocker.style.display = 'box';
-      instructions.style.display = '';
+      //blocker.style.display = '-webkit-box';
+      //blocker.style.display = '-moz-box';
+      //blocker.style.display = 'box';
+      //instructions.style.display = '';
     }
   };
 
@@ -102,29 +100,41 @@ if ( havePointerLock ) {
   //document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
   //document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
   // click to start
-  instructions.addEventListener( 'click', function ( event ) {
-    instructions.style.display = 'none';
+
+
+  //instructions.addEventListener( 'click', function ( event ) {
+    document.getElementById('my_canvas').addEventListener( 'click', function ( event ) {
+    //instructions.style.display = 'none';
     // Ask the browser to lock the pointer
     element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-    if ( /Firefox/i.test( navigator.userAgent ) ) {
-      var fullscreenchange = function ( event ) {
-        if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
-          document.removeEventListener( 'fullscreenchange', fullscreenchange );
-          document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
-          element.requestPointerLock();
-        }
-      };
-      document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-      document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
-      element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
-      element.requestFullscreen();
-    } else {
+    //if ( /Firefox/i.test( navigator.userAgent ) ) {
+    //  var fullscreenchange = function ( event ) {
+    //    if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+    //      document.removeEventListener( 'fullscreenchange', fullscreenchange );
+    //      document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+    //      element.requestPointerLock();
+    //    }
+    //  };
+    //  document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+    //  document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+    //  element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+    //  element.requestFullscreen();
+    //} else {
       element.requestPointerLock();
-    }
+    //}
   }, false );
+
+
+
+
 } else {
   instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
 }
+
+
+
+
+
 /////////////////////////////////////
 init();
 animate();
@@ -226,11 +236,13 @@ function init() {
     }
   }
   // renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+
+	renderer = new THREE.WebGLRenderer({antialias:true, canvas:document.getElementById('my_canvas')});
+  //renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setClearColor( 0xffffff );
   renderer.setPixelRatio( window.devicePixelRatio );
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  document.body.appendChild( renderer.domElement );
+  //renderer.setSize( window.innerWidth, window.innerHeight );
+  //document.body.appendChild( renderer.domElement );
   // event listeners
   window.addEventListener( 'resize', onWindowResize, false );
   var onKeyDown = function ( event ) {
